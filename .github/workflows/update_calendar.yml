@@ -29,6 +29,14 @@ jobs:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
         run: python generate_calendar.py
 
+      - name: Commit and push calendar
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add football_fixtures.ics
+          git commit -m "Update football fixtures calendar" || true
+          git push
+
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
