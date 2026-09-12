@@ -16,15 +16,15 @@ from ics import Calendar, Event
 
 # Configuration
 API_FOOTBALL_BASE_URL = "https://api-football-v3.p.rapidapi.com/fixtures"
+# API-Football v3 league IDs with current=true to fetch current season
 COMPETITIONS = {
-    62: "League One",
-    63: "League Two",
-    64: "National League",
-    65: "EFL Trophy",
-    4: "FA Cup",
-    78: "FA Trophy",
+    42: "League One",
+    43: "League Two",
+    44: "National League",
+    46: "EFL Trophy",
+    45: "FA Cup",
+    47: "FA Trophy",
 }
-SEASON = "2026"
 UK_TIMEZONE = ZoneInfo("Europe/London")
 OUTPUT_FILE = "football_fixtures.ics"
 
@@ -50,7 +50,7 @@ def get_api_key() -> str:
 
 def fetch_fixtures(league_id: int, api_key: str) -> List[Dict]:
     """
-    Fetch fixtures for a specific league from API-Football.
+    Fetch fixtures for a specific league from API-Football using current=true.
 
     Args:
         league_id: The league ID to fetch fixtures for
@@ -67,7 +67,7 @@ def fetch_fixtures(league_id: int, api_key: str) -> List[Dict]:
         "x-rapidapi-key": api_key,
     }
 
-    params = {"league": league_id, "season": SEASON}
+    params = {"league": league_id, "current": "true"}
 
     try:
         response = requests.get(
@@ -94,7 +94,7 @@ def parse_utc_to_uk_time(utc_time_str: str) -> datetime:
     Parse ISO 8601 UTC timestamp and convert to UK local time (Europe/London).
 
     Args:
-        utc_time_str: ISO 8601 formatted timestamp string (e.g., "2026-09-12T15:00:00+00:00")
+        utc_time_str: ISO 8601 formatted timestamp string (e.g., "2024-09-12T15:00:00+00:00")
 
     Returns:
         datetime: Timezone-aware datetime in Europe/London timezone
@@ -263,7 +263,7 @@ def main():
         # Retrieve API key
         api_key = get_api_key()
 
-        print("Fetching football fixtures from API-Football...")
+        print("Fetching football fixtures for current season...")
 
         # Fetch fixtures for all competitions
         all_fixtures = {}
