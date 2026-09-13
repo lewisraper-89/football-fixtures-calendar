@@ -16,7 +16,7 @@ from ics import Calendar, Event
 
 # Configuration
 API_FOOTBALL_BASE_URL = "https://api-football-v3.p.rapidapi.com/fixtures"
-# API-Football v3 league IDs with current=true to fetch current season
+# API-Football v3 league IDs
 COMPETITIONS = {
     42: "League One",
     43: "League Two",
@@ -48,12 +48,40 @@ def get_api_key() -> str:
     return api_key
 
 
-def fetch_fixtures(league_id: int, api_key: str) -> List[Dict]:
+def get_season_and_dates() -> Tuple[str, str, str]:
     """
-    Fetch fixtures for a specific league from API-Football using current=true.
+    Determine the current football season and date range for fixtures.
+    Football season runs August - June (e.g., 2026 = Aug 2026 - June 2027).
+
+    Returns:
+        tuple: (season, from_date, to_date) as strings in format YYYY or YYYY-MM-DD
+    """
+    today = datetime.now()
+    
+    if today.month >= 8:
+        # August onwards = new season started
+        season = str(today.year)
+        to_year = today.year + 1
+    else:
+        # January-July = previous season still running
+        season = str(today.year - 1)
+        to_year = today.year
+    
+    from_date = today.strftime("%Y-%m-%d")
+    to_date = f"{to_year}-06-01"
+    
+    return season, from_date, to_date
+
+
+def fetch_fixtures(league_id: int, season: str, from_date: str, to_date: str, api_key: str) -> List[Dict]:
+    """
+    Fetch fixtures for a specific league from API-Football.
 
     Args:
         league_id: The league ID to fetch fixtures for
+        season: The season to fetch fixtures for
+        from_date: Start date for fixtures (YYYY-MM-DD)
+        to_date: End date for fixtures (YYYY-MM-DD)
         api_key: The API Football key
 
     Returns:
@@ -67,7 +95,12 @@ def fetch_fixtures(league_id: int, api_key: str) -> List[Dict]:
         "x-rapidapi-key": api_key,
     }
 
-    params = {"league": league_id, "current": "true"}
+    params = {
+        "league": league_id,
+        "season": season,
+        "from": from_date,
+        "to": to_date,
+    }
 
     try:
         response = requests.get(
@@ -94,7 +127,7 @@ def parse_utc_to_uk_time(utc_time_str: str) -> datetime:
     Parse ISO 8601 UTC timestamp and convert to UK local time (Europe/London).
 
     Args:
-        utc_time_str: ISO 8601 formatted timestamp string (e.g., "2024-09-12T15:00:00+00:00")
+        utc_time_str: ISO 8601 formatted timestamp string (e.g., "2026-09-12T15:00:00+00:00")
 
     Returns:
         datetime: Timezone-aware datetime in Europe/London timezone
@@ -263,13 +296,17 @@ def main():
         # Retrieve API key
         api_key = get_api_key()
 
-        print("Fetching football fixtures for current season...")
+        # Get season and date range
+        season, from_date, to_date = get_season_and_dates()
+        print(f"Fetching football fixtures for season {season}")
+        print(f"  From: {from_date}")
+        print(f"  To: {to_date}")
 
         # Fetch fixtures for all competitions
         all_fixtures = {}
         for league_id, league_name in COMPETITIONS.items():
             print(f"  Fetching {league_name} (ID: {league_id})...")
-            fixtures = fetch_fixtures(league_id, api_key)
+            fixtures = fetch_fixtures(league_id, season, from_date, to_date, api_key)
             all_fixtures[league_id] = fixtures
             print(f"    Retrieved {len(fixtures)} fixtures")
 
